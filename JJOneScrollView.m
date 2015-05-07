@@ -10,23 +10,23 @@
 #import "UIImageView+WebCache.h"
 
 #define AnimationTime 0.4
+
 #define  mainW [UIScreen mainScreen].bounds.size.width
 #define  mainH [UIScreen mainScreen].bounds.size.height
 
 
 @interface JJOneScrollView()<UIScrollViewDelegate>
-
+{
+    BOOL _isdoubleTap;//记录是否是双击放大,还是单机返回 的一个动作判断参数
+    
+    CGRect _originalRect;//imageView放大进来的时候 他本来的原始的Frame
+}
 
 //每个滚动控制器自带一个核心相片
 @property(nonatomic,weak)UIImageView *mainImageView;
 
-
-@property(nonatomic,assign)CGRect originalRect;
-
-
+//双击动作,在下载完图片后才会有双击手势动作
 @property(nonatomic,strong)UITapGestureRecognizer *twoTap;
-
-
 
 @end
 @implementation JJOneScrollView
@@ -57,35 +57,20 @@
         
         //双击
         UITapGestureRecognizer *twoTap = [[UITapGestureRecognizer alloc]init];
-        [twoTap addTarget:self action:@selector(shuangji:)];
+        [twoTap addTarget:self action:@selector(beginZoom:)];
         [twoTap setNumberOfTapsRequired:2];
         self.twoTap = twoTap;
        
         
-        [tap requireGestureRecognizerToFail:twoTap];
+        //系统默认的 双击单机共存 但是速度有点慢
+       // [tap requireGestureRecognizerToFail:twoTap];
        
         
     }
     return self;
 }
 
-//双击放大嘛 哈哈
--(void)shuangji:(UITapGestureRecognizer*)tap
-{
-    
-    CGPoint touchPoint = [tap locationInView:self];
-    if (self.zoomScale == self.maximumZoomScale) {
-        [self setZoomScale:self.minimumZoomScale animated:YES];
-    } else {
-        CGRect zoomRect;
-        zoomRect.size.height = self.frame.size.height / self.maximumZoomScale;
-        zoomRect.size.width = self.frame.size.width / self.maximumZoomScale;;
-        zoomRect.origin.x = touchPoint.x - (zoomRect.size.width / 2.0);
-        zoomRect.origin.y = touchPoint.y - (zoomRect.size.height / 2.0);
-        [self zoomToRect:zoomRect animated:YES];
-    }
-    
-}
+
 
 #pragma mark - ❤️本地加载图
 -(void)setLocalImage:(UIImageView *)imageView
@@ -95,7 +80,7 @@
     UIWindow * window = [[[UIApplication sharedApplication] delegate] window];
     CGRect originalRect = [imageView convertRect: imageView.bounds toView:window];
     self.mainImageView.frame = originalRect;
-    self.originalRect = originalRect ;
+    _originalRect = originalRect ;
 
     //动画变换设置frame
     [UIView animateWithDuration:AnimationTime animations:^{
@@ -121,7 +106,7 @@
     UIWindow * window = [[[UIApplication sharedApplication] delegate] window];
     CGRect originalRect = [imageView convertRect: imageView.bounds toView:window];
     self.mainImageView.frame = originalRect;
-    self.originalRect = originalRect ;
+    _originalRect = originalRect ;
     
     //动画变换设置frame与背景颜色
     [UIView animateWithDuration:AnimationTime animations:^{
@@ -267,36 +252,59 @@
     self.mainImageView.center = centerPoint;
 }
 
-#pragma mark - ❤️通知代理调用 GoBack
+#pragma mark - ❤️单机 双击 ImageView操作
 
-//图片点击后返回原来的image
+//单机返回
 -(void)goBack:(UITapGestureRecognizer *)tap
 {
-
+    _isdoubleTap = NO;
     
-    //通知代理 我即将消失,给你我的序号
-    [self.mydelegate willGoBack:self.myindex];
-    
-    self.userInteractionEnabled = NO;
-    self.zoomScale = 1;
-    self.delegate = nil;
-    
-    [UIView animateWithDuration:AnimationTime animations:^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         
-        self.mainImageView.frame = self.originalRect;
-        self.superview.backgroundColor = [UIColor clearColor];
+        if (_isdoubleTap) return;
+        //通知代理 我即将消失,给你我的序号
+        [self.mydelegate willGoBack:self.myindex];
         
-    } completion:^(BOOL finished) {
+        self.userInteractionEnabled = NO;
+        self.zoomScale = 1;
+        self.delegate = nil;
         
-        if([self.mydelegate respondsToSelector:@selector(goBack)])
-        {
-            [self.mydelegate goBack];
-        }
+        [UIView animateWithDuration:AnimationTime animations:^{
+            
+            self.mainImageView.frame = _originalRect;
+            self.superview.backgroundColor = [UIColor clearColor];
+            
+        } completion:^(BOOL finished) {
+            
+            if([self.mydelegate respondsToSelector:@selector(goBack)])
+            {
+                [self.mydelegate goBack];
+            }
+            
+        }];
         
-    }];
+    });
     
 }
 
+
+//双击放大或者缩小
+-(void)beginZoom:(UITapGestureRecognizer*)tap
+{
+    _isdoubleTap = YES;
+    CGPoint touchPoint = [tap locationInView:self];
+    if (self.zoomScale == self.maximumZoomScale) {//缩小
+        [self setZoomScale:self.minimumZoomScale animated:YES];
+    } else {//放大
+        CGRect zoomRect;
+        zoomRect.size.height = self.frame.size.height / self.maximumZoomScale;
+        zoomRect.size.width = self.frame.size.width / self.maximumZoomScale;;
+        zoomRect.origin.x = touchPoint.x - (zoomRect.size.width / 2.0);
+        zoomRect.origin.y = touchPoint.y - (zoomRect.size.height / 2.0);
+        [self zoomToRect:zoomRect animated:YES];
+    }
+    
+}
 
 #pragma mark - ❤️回复原状
 -(void)reloadFrame
