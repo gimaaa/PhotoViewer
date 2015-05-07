@@ -17,15 +17,15 @@
 
 @interface JJOneScrollView()<UIScrollViewDelegate>
 {
-    BOOL _isdoubleTap;//记录是否是双击放大,还是单机返回 的一个动作判断参数
+    BOOL _isdoubleTap;
     
-    CGRect _originalRect;//imageView放大进来的时候 他本来的原始的Frame
+    CGRect _originalRect;
 }
 
-//每个滚动控制器自带一个核心相片
+
 @property(nonatomic,weak)UIImageView *mainImageView;
 
-//双击动作,在下载完图片后才会有双击手势动作
+
 @property(nonatomic,strong)UITapGestureRecognizer *twoTap;
 
 @end
@@ -37,25 +37,24 @@
     self = [super initWithFrame:frame];
     if (self) {
         
-        //页面不能点击
+     
         self.userInteractionEnabled = NO;
         
-        //代理
         self.delegate = self;
         
-        //添加主图片显示View
+     
         UIImageView *mainImageView = [[UIImageView alloc]init];
         mainImageView.userInteractionEnabled = YES;
         [self addSubview:mainImageView];
         self.mainImageView = mainImageView;
         
-        //点击时返回退出
+     
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]init];
         [tap addTarget:self action:@selector(goBack:)];
         [tap setNumberOfTapsRequired:1];
         [self addGestureRecognizer:tap];
+    
         
-        //双击
         UITapGestureRecognizer *twoTap = [[UITapGestureRecognizer alloc]init];
         [twoTap addTarget:self action:@selector(beginZoom:)];
         [twoTap setNumberOfTapsRequired:2];
@@ -76,13 +75,13 @@
 -(void)setLocalImage:(UIImageView *)imageView
 {
     
-    //初始位置
+  
     UIWindow * window = [[[UIApplication sharedApplication] delegate] window];
     CGRect originalRect = [imageView convertRect: imageView.bounds toView:window];
     self.mainImageView.frame = originalRect;
     _originalRect = originalRect ;
 
-    //动画变换设置frame
+   
     [UIView animateWithDuration:AnimationTime animations:^{
         
         [self setFrameAndZoom:imageView];
@@ -102,13 +101,13 @@
 -(void)setNetWorkImage:(UIImageView *)imageView urlStr:(NSString *)urlStr
 {
     
-    //初始位置
+   
     UIWindow * window = [[[UIApplication sharedApplication] delegate] window];
     CGRect originalRect = [imageView convertRect: imageView.bounds toView:window];
     self.mainImageView.frame = originalRect;
     _originalRect = originalRect ;
     
-    //动画变换设置frame与背景颜色
+    
     [UIView animateWithDuration:AnimationTime animations:^{
         
         [self setFrameAndZoom:imageView];
@@ -121,19 +120,18 @@
          self.userInteractionEnabled = YES ;
         
        
-            //变换完动画 从网络开始加载图
+        
             [self.mainImageView sd_setImageWithURL:[NSURL URLWithString:urlStr] placeholderImage:self.mainImageView.image       options:SDWebImageRetryFailed|SDWebImageLowPriority progress:^(NSInteger receivedSize, NSInteger expectedSize) {
                 
             } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, NSURL *imageURL) {
                 
                
                 
-                if (error == nil) { //下载成功
+                if (error == nil) {
                     [self addGestureRecognizer:self.twoTap];
                     self.mainImageView.image = image;
-                    [self setFrameAndZoom:self.mainImageView];//设置最新的网络下载后的图的frame大小
-                    
-                }else{ //下载失败
+                    [self setFrameAndZoom:self.mainImageView];
+                }else{
                     
                 }
                 
@@ -151,22 +149,22 @@
 #pragma mark - 🈲计算frame 核心代码
 -(void)setFrameAndZoom:(UIImageView *)imageView
 {
-    //ImageView.image的大小
+    
     CGFloat   imageH;
     CGFloat   imageW;
     
     
-    //设置空image时的情况
+    
     if(imageView.image == nil || imageView.image.size.width == 0 || imageView.image.size.height ==0)
     {
-        //设置主图片
+       
         imageH = mainH;
         imageW = mainW;
         self.mainImageView.image = [UIImage imageNamed:@"none"];
         
-    }else//不空
+    }else
     {
-        //设置主图片
+       
         imageW  = imageView.image.size.width;
         imageH = imageView.image.size.height;
         self.mainImageView.image = imageView.image;
@@ -174,11 +172,11 @@
     
     
     
-    //设置主图片Frame 与缩小比例
-    if(imageW >= (imageH * (mainW/mainH)))//横着
+   
+    if(imageW >= (imageH * (mainW/mainH)))
     {
         
-        //设置居中frame
+       
         CGFloat  myX_ =  0;
         CGFloat  myW_ = mainW;
         CGFloat  myH_  = myW_ *(imageH/imageW);;
@@ -188,16 +186,16 @@
         self.mainImageView.frame = CGRectMake(myX_, myY_, myW_, myH_);
         
         
-        //判断原图是小图还是大图来判断,是可以缩放,还是可以放大
+       
         if (imageW >  myW_) {
-            self.maximumZoomScale = (imageW/myW_ ) ;//放大比例
+            self.maximumZoomScale = (imageW/myW_ ) ;
         }else
         {
-            self.minimumZoomScale = (imageW/myW_);//缩小比例
+            self.minimumZoomScale = (imageW/myW_);
         }
         
         
-    }else//竖着
+    }else
     {
         
         CGFloat  myH_ = mainH;
@@ -205,15 +203,15 @@
         CGFloat  myX_ = mainW - myW_ - ((mainW - myW_)/2);
         CGFloat  myY_ = 0;
         
-        //变换设置frame
+        
         self.mainImageView.frame = CGRectMake(myX_, myY_, myW_, myH_);
         
-        //判断原图是小图还是大图来判断,是可以缩放,还是可以放大
+        
         if (imageH >  myH_) {
-            self.maximumZoomScale =  (imageH/myH_ ) ;//放大比例
+            self.maximumZoomScale =  (imageH/myH_ ) ;
         }else
         {
-            self.minimumZoomScale = (imageH/myH_);//缩小比例
+            self.minimumZoomScale = (imageH/myH_);
         }
     }
     
@@ -221,14 +219,14 @@
 
 
 #pragma mark - ❤️滚动栏 代理方法
-//开始缩放,一开始会自动调用几次,并且要返回告来诉scroll我要缩放哪一个控件.
+
 -(UIView *)viewForZoomingInScrollView:(UIScrollView *)scrollView
 {
        return self.mainImageView;
 }
 
 
-//缩放时调用 ,确定中心点代理方法
+
 - (void)scrollViewDidZoom:(UIScrollView *)scrollView
 {
     
@@ -237,13 +235,13 @@
     CGSize contentSize = scrollView.contentSize;
     CGPoint centerPoint = CGPointMake(contentSize.width/2, contentSize.height/2);
     
-    // 竖着长的 就是垂直居中
+
     if (imgViewFrame.size.width <= scrollSize.width)
     {
         centerPoint.x = scrollSize.width/2;
     }
     
-    // 横着长的  就是水平居中
+
     if (imgViewFrame.size.height <= scrollSize.height)
     {
         centerPoint.y = scrollSize.height/2;
@@ -254,7 +252,7 @@
 
 #pragma mark - ❤️单机 双击 ImageView操作
 
-//单机返回
+
 -(void)goBack:(UITapGestureRecognizer *)tap
 {
     _isdoubleTap = NO;
@@ -262,7 +260,7 @@
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         
         if (_isdoubleTap) return;
-        //通知代理 我即将消失,给你我的序号
+       
         [self.mydelegate willGoBack:self.myindex];
         
         self.userInteractionEnabled = NO;
@@ -288,14 +286,14 @@
 }
 
 
-//双击放大或者缩小
+
 -(void)beginZoom:(UITapGestureRecognizer*)tap
 {
     _isdoubleTap = YES;
     CGPoint touchPoint = [tap locationInView:self];
-    if (self.zoomScale == self.maximumZoomScale) {//缩小
+    if (self.zoomScale == self.maximumZoomScale) {
         [self setZoomScale:self.minimumZoomScale animated:YES];
-    } else {//放大
+    } else {
         CGRect zoomRect;
         zoomRect.size.height = self.frame.size.height / self.maximumZoomScale;
         zoomRect.size.width = self.frame.size.width / self.maximumZoomScale;;
