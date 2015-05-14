@@ -292,7 +292,7 @@
     _isdoubleTap = YES;
     CGPoint touchPoint = [tap locationInView:self];
     if (self.zoomScale == self.maximumZoomScale) {
-        [self setZoomScale:self.minimumZoomScale animated:YES];
+        [self setZoomScale:1.0 animated:YES];
     } else {
         CGRect zoomRect;
         zoomRect.size.height = self.frame.size.height / self.maximumZoomScale;
