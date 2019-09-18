@@ -1,48 +1,39 @@
 //
-//  JJPhotoManeger.h
-//  test
+//  KimBox. All rights reserved.
 //
-//  Created by KimBox on 15/4/28.
-//  Copyright (c) 2015年 KimBox. All rights reserved.
+//  兼容性强
 //
-
-
-
+//  本代码加载网络图片用的是SDWebimage框架,如需更换请前往改代码
+//  [JJOneScrollView starDownLoadImg]
+//  [JJOneScrollView dealloc]
+//
+//
+//
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-//view
+#import "JJDataModel.h"
 #import "JJMainScrollView.h"
 
 
+
 @interface JJPhotoManeger : NSObject
-/**
- *  创建
- */
-+(instancetype)maneger;
-
-/**
-    代理
- */
-@property(nonatomic,weak)id<JJPhotoDelegate> delegate;
-
-
 
 
 #pragma mark - ❤️俩核心功能
 
-/**
- *  本地图片放大浏览    
- */
--(void)showLocalPhotoViewer:(NSArray *)imageViews selecView:(UIImageView *)selecView;
-
 
 /**
- *  放大浏览网络图片
+ *  放大浏览图片
+ *
+ *  selectView:当前点击的imageView
+ *  selectViewIndex:当前点击的imageView在数组中的index
  */
--(void)showNetworkPhotoViewer:(NSArray *)imageViews urlStrArr:(NSArray *)urlStrArr selecView:(UIImageView *)selecView;
+-(void)showPhotoViewerModels:(NSArray<JJDataModel *> *)models  selectView:(UIView *)selectView;
+-(void)showPhotoViewerModels:(NSArray<JJDataModel *> *)models  selectViewIndex:(NSInteger)selectViewIndex;
 
 
-
+//退出时最后点击的图角标
+@property(nonatomic,copy)void(^exitComplate)(NSInteger lastSelectIndex);
 
 @end

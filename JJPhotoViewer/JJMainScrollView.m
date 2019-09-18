@@ -1,46 +1,41 @@
-//
-//  JJMainScrollView.m
-//  test
-//
-//  Created by KimBox on 15/4/28.
-//  Copyright (c) 2015年 KimBox. All rights reserved.
-//
 
 #import "JJMainScrollView.h"
-#import "JJPhoto.h"
+#import "JJDataModel.h"
 #import "JJOneScrollView.h"
 
-#define Gap 10   //俩照片间黑色间距
+#define Gap 10   //俩照片间黑色间距的一半
 
-#define MianW [UIScreen mainScreen].bounds.size.width
-#define MianH [UIScreen mainScreen].bounds.size.height
+@interface JJMainScrollView()<UIScrollViewDelegate>
 
-#define RGBColor(r , g, b, a) [UIColor colorWithRed:(r)/255.0 green:(g)/255.0 blue:(b)/255.0 alpha:(a)/1.0 ]
-#define RandomColor RGBColor(arc4random_uniform(255), arc4random_uniform(255), arc4random_uniform(255), arc4random_uniform(255))
 
-@interface JJMainScrollView()<UIScrollViewDelegate,JJOneScrollViewDelegate>
 //存放了所有 单个滚动器
 @property(nonatomic,strong)NSMutableArray *oneScrolArr;
 
-@property(nonatomic,assign)NSInteger willBeginDraggingIndex;
+//滚动
+@property(nonatomic,strong)UIScrollView *mainScroll;
+
+//底部小圆点
+@property(nonatomic,strong)UIPageControl *pageCt;
+
 @end
 
 
 @implementation JJMainScrollView
 
-
-
+-(void)layoutSubviews{
+    [super layoutSubviews];
+    self.mainScroll.frame = CGRectMake(-Gap, 0,self.frame.size.width + Gap + Gap,self.frame.size.height);
+    self.pageCt.bounds = CGRectMake(0, 0, self.frame.size.width, 35);
+    self.pageCt.center = CGPointMake(self.frame.size.width/2, self.frame.size.height -   self.pageCt.bounds.size.height/2);
+}
 
 //存放了所有 单个滚动器数组懒加载
--(NSMutableArray *)oneScrolArr
-{
-    if(_oneScrolArr == nil)
-    {
+-(NSMutableArray *)oneScrolArr{
+    if(_oneScrolArr == nil){
         _oneScrolArr = [NSMutableArray array];
     }
     return  _oneScrolArr;
 }
-
 
 #pragma mark - 自己的属性设置一下
 - (instancetype)initWithFrame:(CGRect)frame
@@ -49,148 +44,141 @@
     if (self) {
         
         self.backgroundColor = [UIColor clearColor];
-
-        //设置主滚动创的大小位置
-        self.frame = CGRectMake(-Gap, 0, [UIScreen mainScreen].bounds.size.width + Gap + Gap,[UIScreen mainScreen].bounds.size.height);
         
-        //分页
-        self.pagingEnabled = YES;
-        self.showsHorizontalScrollIndicator = NO;
+        //主滚动
+        UIScrollView *mainScroll = [[UIScrollView alloc]init];
+        mainScroll.backgroundColor = [UIColor clearColor];
+        mainScroll.pagingEnabled = YES;
+        mainScroll.showsHorizontalScrollIndicator = NO;
+        [self addSubview:mainScroll];
+        mainScroll.delegate = self;
+        self.mainScroll = mainScroll;
         
-        //代理
-        self.delegate = self;
+        
+        //pageCt
+        UIPageControl *pageCt = [[UIPageControl alloc]init];
+        pageCt.currentPageIndicatorTintColor = [UIColor whiteColor];
+        pageCt.pageIndicatorTintColor = [UIColor colorWithRed:(66.0)/255.0 green:(66.0)/255.0 blue:(66.0)/255.0 alpha:1.0];
+        [self addSubview:pageCt];
+        self.pageCt = pageCt;
 
     }
     return self;
 }
 
-#pragma mark - 拿到数据时展示
 
--(void)setPhotoData:(NSArray *)photoArr Type:(JJPhotoViewerType)type
-{
+
+-(void)showAndSetModels:(NSArray<JJDataModel *> *)models selectImgViewIndex:(NSInteger)selectImgViewIndex{
     
+    
+    CGFloat mainScrollW = self.frame.size.width + 2 * Gap;
     //设置可滚动范围
-    self.contentSize =  CGSizeMake(photoArr.count * self.frame.size.width, 0);
-    
-    //点击进来的ImageView是数组中的第几个?
-    NSInteger selcImageIndex;
-    for(int i = 0 ; i < photoArr.count ; i ++)
-    {
-        JJPhoto *photo = photoArr[i];
-       
-        if(photo.isSelecImageView == YES)
-        {
-            selcImageIndex = i;
-            
-       
-            break;
-        }
-        
-        
-    }
+    self.mainScroll.contentSize =  CGSizeMake(models.count * mainScrollW, 0);
     
     //设置首个展示页面
-    self.contentOffset = CGPointMake(selcImageIndex * self.frame.size.width, 0);
+    self.mainScroll.contentOffset = CGPointMake(selectImgViewIndex * mainScrollW, 0);
     
-    //设置一个相片
-    for (int i = 0; i < photoArr.count ; i ++)
+    
+    //设置相片
+    for (int i = 0; i < models.count ; i ++)
     {
         //取出照片模型
-        JJPhoto *photo =  photoArr[i];
-        
-        //传值给单个滚动器
+        JJDataModel *model =  models[i];
+
+        //传值给单个图片查看器
         JJOneScrollView *oneScroll = [[JJOneScrollView alloc]init];
-        oneScroll.mydelegate = self;
-        //自己是数组中第几个图
-        oneScroll.myindex = i;
+
+
         //设置位置并添加
-        oneScroll.frame = CGRectMake((i*self.frame.size.width)+Gap , 0 ,MianW, MianH);
-        [self addSubview:oneScroll];
-        
-        
-        //加载图片方式
-        switch (type) {
-                
-                //本地加载图图❤️
-            case JJLocalWithLocalPhotoViewer:
-                [oneScroll setLocalImage:photo.imageView  ];
-                break;
-                
-                //网络加载图图❤️
-            case JJInternetWithInternetPhotoViewer:
-                [oneScroll setNetWorkImage:photo.imageView urlStr:photo.urlStr ];
-                break;
+        oneScroll.frame = CGRectMake((i * mainScrollW ) + Gap , 0 ,self.frame.size.width, self.frame.size.height);
+        [self.mainScroll addSubview:oneScroll];
+
+
+        //给模型并展示
+        oneScroll.model = model;
+
+        //不在屏幕可是范围内的先排布置版好
+        if(i != selectImgViewIndex){
+            [oneScroll showWithAnimation:NO completion:nil];
         }
-        
+
         //添加到单个滚动创集合
         [self.oneScrolArr addObject:oneScroll];
-    }
-    
-}
 
-
-#pragma mark - 😄滚动监听 重置缩放
--(void)scrollViewDidScroll:(UIScrollView *)scrollView
-{
-    
-    NSInteger x = scrollView.contentOffset.x;
-    NSInteger w = scrollView.bounds.size.width;
-    NSInteger gapHead = (x % w);
-    NSInteger mainW =   self.frame.size.width ;
-    int gapEnd =  mainW - gapHead;
-    
-    //接近30个点 边距的时候会调用 用0的话有的时候不触发
-    if(fabs(gapHead) <= 20.0 ||fabs(gapEnd) <= 20.0  )
-    {
-        //当前观看的这个是第几个oneSc
-        NSInteger  nowLookIndex =( scrollView.contentOffset.x + (scrollView.bounds.size.width/2)) /scrollView.bounds.size.width  ;
         
-   
-        
-        for(int i = 0;i < self.oneScrolArr.count ; i++  )
-        {
-            if (i != nowLookIndex) {//除了当前看的 其他都给我重置位置
-                JJOneScrollView *one = self.oneScrolArr[i];
-                [one reloadFrame];
-            }else
-            {
-
+        //退出回调
+        __weak typeof(self) share = self;
+        oneScroll.backBlock = ^(BOOL animating) {
+            if(animating){//刚点击退出,正在动画中,
                 
-
+                [share hidenSomeSubview];
+                
+            }else{//动画执行完了 可以自毁了
+                if(share.exitComplate){
+                    share.exitComplate(i);
+                }
+                [share removeFromSuperview];
             }
-        }
+        };
+    }
+
+
+    //屏幕中即将展示的那个
+    JJOneScrollView *oneScroll = self.oneScrolArr[selectImgViewIndex];
+    //动画形式展示完毕后
+    [oneScroll showWithAnimation:YES completion:^{
+        [self downloadImgSelfAndLeftRight:selectImgViewIndex];//下载前中后的图
+        //底部
+        self.pageCt.numberOfPages = models.count;
+        self.pageCt.currentPage = selectImgViewIndex;
+    }];
+   
+}
+
+//隐藏所有非相片子控件
+-(void)hidenSomeSubview{
+    self.pageCt.hidden = YES;
+}
+
+
+//下载自己+左右两个 imageview节省资源
+-(void)downloadImgSelfAndLeftRight:(NSInteger)index{
+    //取出自己
+    if(index < self.oneScrolArr.count){
+        JJOneScrollView *selfScroll =  self.oneScrolArr[index];
+        [selfScroll starDownLoadImg];
+    }
+    
+    //取出左边
+    if(index != 0 && index - 1 < self.oneScrolArr.count){
+        JJOneScrollView *leftScroll =  self.oneScrolArr[index-1];
+        [leftScroll starDownLoadImg];
+    }
+    
+    //取出右边
+    if(index + 1< self.oneScrolArr.count){
+        JJOneScrollView *rightScroll =  self.oneScrolArr[index+1];
+        [rightScroll starDownLoadImg];
     }
 }
 
 
 
-
-
-
-#pragma mark - OneScroll的代理方法
-
-//即将退出图片浏览器
--(void)willGoBack:(NSInteger)seletedIndex
-{
-    //防崩
-    self.delegate = nil;
-    //返回退出时点的ImageView的序号给代理
-    
-    [self.mainDelegate photoViwerWilldealloc:seletedIndex];
-    
+- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView{
+    NSInteger currentIndex = scrollView.contentOffset.x / self.mainScroll.bounds.size.width;
+    self.pageCt.currentPage = currentIndex;
+    [self downloadImgSelfAndLeftRight:currentIndex];
 }
 
-//退出图片浏览器
--(void)goBack
-{
-    //让原始底层UIView死掉
-    [self.superview removeFromSuperview];
+- (void)scrollViewDidEndScrollingAnimation:(UIScrollView *)scrollView{
+    NSInteger currentIndex = scrollView.contentOffset.x / self.mainScroll.bounds.size.width;
+    self.pageCt.currentPage = currentIndex;
+    [self downloadImgSelfAndLeftRight:currentIndex];
 }
 
-#pragma mark - 😢释放代理防崩
--(void)dealloc
-{
-    self.delegate = nil;
+
+-(void)dealloc{
+    NSLog(@"main");
 }
 
 @end

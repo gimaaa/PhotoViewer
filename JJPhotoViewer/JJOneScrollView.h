@@ -1,44 +1,23 @@
 //
-//  JJOneScrollView.h
-//  test
-//
-//  Created by KimBox on 15/5/4.
-//  Copyright (c) 2015年 KimBox. All rights reserved.
+//  KimBox. All rights reserved.
 //
 
 #import <UIKit/UIKit.h>
+#import "JJDataModel.h"
 
-@protocol JJOneScrollViewDelegate <NSObject>
+@interface JJOneScrollView : UIView
 
--(void)goBack;
+//数据
+@property(nonatomic,strong)JJDataModel *model;
 
--(void)willGoBack:(NSInteger)seletedIndex;
+//开始展示:animation 为 YES 有展示动画 即(当前正在屏幕前)
+-(void)showWithAnimation:(BOOL)animation completion:(void (^)(void))completion;
 
-@optional
+//从model数据中 加载网络图 或 加载本地图
+-(void)starDownLoadImg;
 
-@end
-@interface JJOneScrollView : UIScrollView
-
-
-//代理
-@property(nonatomic,weak)id<JJOneScrollViewDelegate> mydelegate;
-
-/**浏览器中我是第几个图片?*/
-@property(nonatomic,assign)NSInteger myindex;
-
-
-
-//❤️本地加载图
--(void)setLocalImage:(UIImageView *)imageView ;
-
-//❤️网络加载图
--(void)setNetWorkImage:(UIImageView *)imageView urlStr:(NSString *)urlStr ;
-
-
-//回复放大缩小前的原状
--(void)reloadFrame;
-
-
+//退出block
+@property(nonatomic,copy)void(^backBlock)(BOOL animating);
 
 
 @end
