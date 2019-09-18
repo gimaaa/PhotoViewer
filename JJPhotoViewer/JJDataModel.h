@@ -7,7 +7,7 @@
 
 @interface JJDataModel : NSObject
 
-//此图片所在的的容器view  ,  如不填写: 将没有 (展示与回缩动画)
+//此图片所在的的容器view  , 如不填写: 将没有 (展示与回缩动画)
 @property(nonatomic,strong)UIView *containerView;
 
 //图片加载完前显示的占位图  ,   如不填写: 默认采用containerView 的内容(如 imageview的图  button的图或背景)  , 都没有就是黑色
