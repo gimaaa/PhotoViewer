@@ -1,5 +1,5 @@
 //
-//   KimBox. All rights reserved.
+//   1KimBox. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
