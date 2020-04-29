@@ -2,7 +2,7 @@
 
 #import "JJPhotoManeger.h"
 #import "JJMainScrollView.h"
-
+#import "JJMainShowController.h"
 
 @interface JJPhotoManeger()
 
@@ -11,6 +11,16 @@
 @end
 @implementation JJPhotoManeger
 
+//用控制器弹
+-(void)showPhotoViewerModels:(NSArray<JJDataModel *> *)models controller:(UIViewController*)controller selectViewIndex:(NSInteger)selectViewIndex{
+    JJMainShowController *vc = [[JJMainShowController alloc]init];
+    vc.models = models;
+    vc.selectViewIndex = selectViewIndex;
+    vc.deleteComplate = self.deleteComplate;
+    vc.option = self.option;
+    [controller.navigationController pushViewController:vc animated:YES];
+}
+
 
 -(void)showPhotoViewerModels:(NSArray<JJDataModel *> *)models selectViewIndex:(NSInteger)selectViewIndex{
     
@@ -18,6 +28,7 @@
     JJMainScrollView *mainScrollView = [[JJMainScrollView alloc]init];
     mainScrollView.frame = CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
     mainScrollView.exitComplate = self.exitComplate;//block
+    mainScrollView.option = self.option;
     
     //主窗口底层View
     [[UIApplication sharedApplication].keyWindow.rootViewController.view addSubview:mainScrollView];
@@ -28,7 +39,9 @@
     }
     
     //展示图片们
-    [mainScrollView showAndSetModels:models selectImgViewIndex:selectViewIndex];
+    [mainScrollView showAndSetModels:models selectImgViewIndex:selectViewIndex controllerMode:NO];
+    
+  
 }
 
 

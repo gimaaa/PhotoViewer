@@ -15,11 +15,11 @@
 
 
 //-----------------------加载显示图片来源-------------------------------------
-//点击图片后 网路加载图   第一优先级 (imgUrl加载失败 或为空 会去加载 localImgNamed)
-@property(nonatomic,copy)NSString *imgUrl;
+//点击图片后 网路加载图   第一优先级 (img加载失败 或为空 会去加载 localImgNamed)
+@property(nonatomic,strong)id img;
 
 //点击图片后 要显示的图的本地图  第二优先级
-@property(nonatomic,copy)NSString *localImgNamed;
+@property(nonatomic,strong)UIImage *loc_img;
 //------------------------------------------------------------
 
 

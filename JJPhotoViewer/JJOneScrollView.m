@@ -20,10 +20,14 @@
 @property(nonatomic,strong)UIImage *holdImg;
 //图片图是否下载完成过
 @property(nonatomic,assign)BOOL downloadComplate;
+@property(nonatomic,strong)UIImage *complateIMG;
 
 @end
 @implementation JJOneScrollView
 
+- (UIImage *)getComplateIMG{
+    return  self.complateIMG;
+}
 -(UIImage *)holdImg{
     if(_holdImg == nil){
         if(self.model.holdImg){
@@ -168,43 +172,39 @@
 #pragma mark -  展示内容
 -(void)showWithAnimation:(BOOL)animation completion:(void (^)(void))completion{
     
-        if(animation){ //刚好展示在屏目前的
-            
-            if(self.model.containerView == nil){//1:没有给到容器的时候
-                [self setFrameAndZoom:self.holdImg];
-                self.alpha = 0;
-         
-            }else{//2:有给容器的时候
-                UIWindow * window = [[[UIApplication sharedApplication] delegate] window];
-                CGRect originalRect = [self.model.containerView convertRect:self.model.containerView.bounds toView:window];
-                self.mainImageView.frame = originalRect;
-                
-            }
-
-            [UIView animateWithDuration:AnimationTime animations:^{
-                
-                if(self.model.containerView == nil){//1:没有给到容器的时候
-                    self.alpha = 1;
-                    
-                }else{//2:有给容器的时候
-                    [self setFrameAndZoom:self.holdImg];
-                }
-
-                self.superview.backgroundColor = [UIColor blackColor];
-                
-            } completion:^(BOOL finished) {
-                self.userInteractionEnabled = YES ;
-                if(completion){
-                    completion();
-                }
-            }];
-            
-        }else{//其他看不见的 直接放置好
+    if(animation){ //刚好展示在屏目前的
+        
+        if(self.model.containerView == nil){//1:没有给到容器的时候
             [self setFrameAndZoom:self.holdImg];
-            self.userInteractionEnabled = YES ;
+            self.alpha = 0;
             
+        }else{//2:有给容器的时候
+            UIWindow * window = [[[UIApplication sharedApplication] delegate] window];
+            CGRect originalRect = [self.model.containerView convertRect:self.model.containerView.bounds toView:window];
+            self.mainImageView.frame = originalRect;
         }
-   
+        
+        self.superview.backgroundColor = [UIColor clearColor];
+
+        [UIView animateWithDuration:AnimationTime animations:^{
+            self.superview.backgroundColor = [UIColor blackColor];
+            if(self.model.containerView == nil){//1:没有给到容器的时候
+                self.alpha = 1;
+            }else{//2:有给容器的时候
+                [self setFrameAndZoom:self.holdImg];
+            }
+        } completion:^(BOOL finished) {
+            self.userInteractionEnabled = YES ;
+            if(completion){
+                completion();
+            }
+        }];
+        
+    }else{//其他看不见的 直接放置好
+        [self setFrameAndZoom:self.holdImg];
+        self.userInteractionEnabled = YES ;
+    }
+    
 }
 
 
@@ -217,14 +217,13 @@
         return;
     }
     
-    
     //网图
-    if(self.model.imgUrl.length){
-        [self.activityIndicator startAnimating];
+    NSString *imgStr = (NSString *)self.model.img;
+    if([self.model.img isKindOfClass:[NSString class]] && imgStr.length > 0){
         
+        [self.activityIndicator startAnimating];
             //!!!!⚠️⚠️⚠️(可以根据自己项目中的下载框架,进行替换)⚠️⚠️⚠️
-            [self.mainImageView sd_setImageWithURL:[NSURL URLWithString:self.model.imgUrl] placeholderImage:self.holdImg  options:SDWebImageRetryFailed|SDWebImageLowPriority progress:^(NSInteger receivedSize, NSInteger expectedSize) {
-            } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, NSURL *imageURL) {
+            [self.mainImageView sd_setImageWithURL:[NSURL URLWithString:imgStr] placeholderImage:self.holdImg  options:SDWebImageRetryFailed|SDWebImageLowPriority progress:nil completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, NSURL *imageURL) {
                 
                 //用户不可点击状态下都是动画缩放状态,不能用setFrameAndZoom来再改变frame大小,会影响动画效果
                 if(self.userInteractionEnabled == NO){
@@ -236,27 +235,35 @@
                     [self.activityIndicator stopAnimating];
                     [self setFrameAndZoom:image];//设置最新的网络下载后的图的frame大小
                     self.downloadComplate = YES;//下载成功过
-                    
+                    self.complateIMG = image;
                 }else{//下载失败❌
                     
                     //试着加载本地图
-                    if(self.model.localImgNamed.length){
-                        [self setFrameAndZoom:[UIImage imageNamed:self.model.localImgNamed]];
-                        self.downloadComplate = YES;//加载成功
+                    [self setFrameAndZoom:self.model.loc_img];
+                    self.downloadComplate = YES;//加载成功
+                    if(self.model.loc_img != nil){
+                         self.complateIMG = self.model.loc_img;
                     }
                 }
             }];
         
         return;
+        
+    }else if ([self.model.img isKindOfClass:[UIImage class]]){
+        UIImage *img = (UIImage *)self.model.img;
+        [self setFrameAndZoom:img];
+        self.downloadComplate = YES;//加载成功
+        self.complateIMG = img;
+        return;
     }
     
+
     
     //本地图
-    if(self.model.imgUrl.length == 0){
-        if(self.model.localImgNamed.length){
-            [self setFrameAndZoom:[UIImage imageNamed:self.model.localImgNamed]];
-        }
+    if(self.model.loc_img){
+        [self setFrameAndZoom:self.model.loc_img];
         self.downloadComplate = YES;//加载成功
+        self.complateIMG = self.model.loc_img;
         return;
     }
 }
@@ -268,33 +275,34 @@
 -(void)goBack:(UITapGestureRecognizer *)tap{
     
     //通知父控件隐藏子控件
-    if(self.backBlock){
-        self.backBlock(YES);
+    if(self.clickBlock){
+        self.clickBlock();
     }
     
-    self.userInteractionEnabled = NO;
-    [self.activityIndicator stopAnimating];
-    self.oneScrollView.zoomScale = 1;
-    
-    [UIView animateWithDuration:AnimationTime animations:^{
+    if(!self.controllerMode){
+        self.userInteractionEnabled = NO;
+        [self.activityIndicator stopAnimating];
+        self.oneScrollView.zoomScale = 1;
         
-        if(self.model.containerView){//1:有给容器
-            UIWindow * window = [[[UIApplication sharedApplication] delegate] window];
-            CGRect originalRect = [self.model.containerView convertRect:self.model.containerView.bounds toView:window];
-            self.mainImageView.frame = originalRect;
+        [UIView animateWithDuration:AnimationTime animations:^{
             
-        }else{//2:没给容器
-            self.alpha = 0;
-        }
-        
-        self.superview.backgroundColor = [UIColor clearColor];
-        
-    } completion:^(BOOL finished) {
-        if(self.backBlock){//通知父控自毁
-            self.backBlock(NO);
-        }
-    }];
-
+            if(self.model.containerView){//1:有给容器
+                UIWindow * window = [[[UIApplication sharedApplication] delegate] window];
+                CGRect originalRect = [self.model.containerView convertRect:self.model.containerView.bounds toView:window];
+                self.mainImageView.frame = originalRect;
+                
+            }else{//2:没给容器
+                self.alpha = 0;
+            }
+            
+            self.superview.backgroundColor = [UIColor clearColor];
+            
+        } completion:^(BOOL finished) {
+            if(self.willExitBlock){
+                self.willExitBlock();
+            }
+        }];
+    }
 };
 
 //双击缩/放

@@ -8,6 +8,9 @@
 @interface JJOneScrollView : UIView
 
 //数据
+@property(nonatomic,assign)BOOL controllerMode;
+
+//数据
 @property(nonatomic,strong)JJDataModel *model;
 
 //开始展示:animation 为 YES 有展示动画 即(当前正在屏幕前)
@@ -17,7 +20,10 @@
 -(void)starDownLoadImg;
 
 //退出block
-@property(nonatomic,copy)void(^backBlock)(BOOL animating);
+@property(nonatomic,copy)void(^clickBlock)(void);
+@property(nonatomic,copy)void(^willExitBlock)(void);
 
+
+-(UIImage *)getComplateIMG;
 
 @end
