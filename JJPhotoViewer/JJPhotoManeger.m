@@ -1,8 +1,6 @@
 
 
 #import "JJPhotoManeger.h"
-#import "JJMainScrollView.h"
-#import "JJMainShowController.h"
 
 @interface JJPhotoManeger()
 

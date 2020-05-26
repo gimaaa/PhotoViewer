@@ -13,8 +13,9 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import "JJDataModel.h"
-#import "JJMainScrollView.h"
 #import "JJPhotoOption.h"
+#import "JJMainScrollView.h"
+#import "JJMainShowController.h"
 
 
 @interface JJPhotoManeger : NSObject
